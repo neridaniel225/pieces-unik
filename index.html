@@ -441,6 +441,23 @@ select.mf-input option{background:#111;color:#fff}
   .pay-icons-grid{grid-template-columns:1fr 1fr}
   .foot-grid{grid-template-columns:1fr}
 }
+/* ── Catégories accueil : grandes tuiles qui défilent (tous formats), indépendant du carrousel hero ── */
+.cats-wrap{position:relative}
+.cats-grid{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;gap:10px;scrollbar-width:none;padding-bottom:4px}
+.cats-grid::-webkit-scrollbar{display:none}
+.cat-tile{flex:0 0 calc(25% - 8px);min-width:260px;scroll-snap-align:start;cursor:pointer;position:relative;overflow:hidden;aspect-ratio:.85;background:var(--k)}
+.cat-tile img{width:100%;height:100%;object-fit:cover;opacity:.7;transition:transform .5s;display:block}
+.cat-tile:hover img{transform:scale(1.05)}
+.cat-tile .ct-shade{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,transparent 60%)}
+.cat-tile .ct-body{position:absolute;bottom:0;left:0;right:0;padding:1.3rem 1.1rem}
+.cat-tile .ct-name{font-family:'Barlow Condensed',sans-serif;font-size:1.9rem;font-weight:900;color:var(--w);text-transform:uppercase;letter-spacing:.04em;line-height:1;margin-bottom:.6rem}
+.cats-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:44px;height:44px;border:1px solid rgba(255,255,255,.4);background:rgba(0,0,0,.55);color:#fff;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.cats-arrow.l{left:8px}.cats-arrow.r{right:8px}
+@media(max-width:768px){
+  .cat-tile{flex:0 0 78%;scroll-snap-align:center;aspect-ratio:.8}
+  .cat-tile .ct-name{font-size:2.1rem}
+  .cats-arrow{display:none}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -512,9 +529,6 @@ select.mf-input option{background:#111;color:#fff}
     <div class="mob-close" onclick="closeMob()">✕</div>
   </div>
   <nav class="mob-nav">
-    <div class="mob-a" onclick="showCat('femme');closeMob()">Femme</div>
-    <div class="mob-a" onclick="showCat('homme');closeMob()">Homme</div>
-    <div class="mob-a" onclick="showCat('acc');closeMob()">Accessoires</div>
     <div id="mob-dynamic-links"></div>
     <div class="mob-a" onclick="openCart();closeMob()">Mon Panier</div>
   </nav>
@@ -579,7 +593,7 @@ select.mf-input option{background:#111;color:#fff}
       </div>
     </div>
     <!-- Grille catégories — générée dynamiquement depuis Supabase (renderCatsGrid) -->
-    <div id="homeCatsGrid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px"></div>
+    <div class="cats-wrap"><button class="cats-arrow l" onclick="catsScroll(-1)" aria-label="Précédent">‹</button><div id="homeCatsGrid" class="cats-grid"></div><button class="cats-arrow r" onclick="catsScroll(1)" aria-label="Suivant">›</button></div>
   </div>
 
   <!-- FLASH BAR -->
@@ -599,11 +613,11 @@ select.mf-input option{background:#111;color:#fff}
         <div style="font-size:.5rem;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--g5);margin-bottom:.2rem">Incontournables</div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:900;text-transform:uppercase;letter-spacing:.04em">Best Sellers</div>
       </div>
-      <button class="btn-outline" onclick="showCat('homme')" style="font-size:.58rem;padding:9px 18px">Tout voir →</button>
+      <button class="btn-outline" onclick="goShop()" style="font-size:.58rem;padding:9px 18px">Tout voir →</button>
     </div>
     <div class="prod-grid" id="homeAllGrid"></div>
     <div style="text-align:center;margin-top:2.5rem">
-      <button class="btn-outline" onclick="showCat('homme')" style="padding:14px 50px;font-size:.62rem">Voir tous les produits →</button>
+      <button class="btn-outline" onclick="goShop()" style="padding:14px 50px;font-size:.62rem">Voir tous les produits →</button>
     </div>
   </div>
 
@@ -941,7 +955,7 @@ select.mf-input option{background:#111;color:#fff}
       <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="var(--w3)" stroke-width="1.2" style="margin-bottom:1.2rem"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
       <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.4rem;font-weight:900;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem;color:var(--g4)">Wishlist vide</div>
       <p style="font-size:.76rem;color:var(--g5);margin-bottom:1.5rem">Clique sur ♥ sur un produit pour l'ajouter ici</p>
-      <button class="btn-red" onclick="showCat('homme')">Explorer les produits →</button>
+      <button class="btn-red" onclick="goShop()">Explorer les produits →</button>
     </div>
     <div class="prod-grid" id="wishGrid"></div>
   </div>
@@ -999,10 +1013,7 @@ select.mf-input option{background:#111;color:#fff}
       <div>
         <div class="foot-col-t">Collections</div>
         <div class="foot-links">
-          <a onclick="showCat('femme')">Femme</a>
-          <a onclick="showCat('homme')">Homme</a>
-          <a onclick="showCat('acc')">Accessoires</a>
-          <a onclick="nav('newdrop')" style="color:var(--red)">🔥 New Drop</a>
+          <span id="footCatLinks" style="display:contents"></span>
         </div>
       </div>
       <div>
@@ -1101,7 +1112,7 @@ function getRecommendedProducts(excludeId,limit){
   return combined;
 }
 let cart=JSON.parse(localStorage.getItem("sl_cart")||"[]");
-let currentCat="homme";
+let currentCat="";
 const FMT=n=>n.toLocaleString("fr-FR")+" FCFA";
 
 // Vérifie le formulaire de livraison : impossible de passer au paiement s'il est incomplet
@@ -1144,10 +1155,11 @@ function showPage(id){nav(id);}
 
 function showCat(cat){
   // Bloque l'accès aux catégories désactivées dans l'admin
+  // Une catégorie supprimée ou désactivée dans l'admin n'existe plus pour le site
   const catData=SITE_CATS.find(c=>c.id===cat);
-  if(catData&&catData.active===false)return;
+  if(!catData||catData.active===false)return;
 
-  // Pages spéciales géré comme des "catégories" dans l'admin (image, activation) mais qui pointent vers une page dédiée
+  // La catégorie « newdrop » (si elle existe en base) ouvre sa page dédiée
   if(cat==='newdrop'){nav('newdrop');return;}
 
   currentCat=cat;
@@ -1156,9 +1168,8 @@ function showCat(cat){
   if(navEl)navEl.classList.add("on");
 
   // Titre et sous-titre depuis SITE_CATS (Supabase) en priorité, fallback statique
-  const fallbackTitles={femme:["FEMME","Pour celles qui n'ont peur de rien"],homme:["HOMME","Pour ceux qui vivent dans l'ombre"],acc:["ACCESSOIRES","Les détails qui changent tout"]};
-  const t=catData?.name?.toUpperCase()||fallbackTitles[cat]?.[0]||cat.toUpperCase();
-  const s=fallbackTitles[cat]?.[1]||'';
+  const t=(catData.name||cat).toUpperCase();
+  const s='';
   document.getElementById("catTitle").textContent=t;
   document.getElementById("catSub").textContent=s;
 
@@ -1207,9 +1218,7 @@ function renderHome(filter){
   let prods=PRODS.filter(p=>p.active!==false);
   if(filter==="new") prods=prods.filter(p=>p.badge==="NEW"||p.badge==="HOT");
   else if(filter==="hot") prods=prods.filter(p=>p.badge==="HOT"||p.old>0);
-  else if(filter==="homme") prods=prods.filter(p=>p.cat==="homme");
-  else if(filter==="femme") prods=prods.filter(p=>p.cat==="femme");
-  else if(filter==="acc") prods=prods.filter(p=>p.cat==="acc");
+  else if(filter) prods=prods.filter(p=>p.cat===filter);
   const grid=document.getElementById("homeAllGrid");
   if(grid) grid.innerHTML=prods.map(pcHTML).join("");
   renderRecommended();
@@ -1671,7 +1680,7 @@ function openProdModal(id){
   document.getElementById("prodModalGrid").style.gridTemplateColumns=window.innerWidth<640?"1fr":"1.1fr 1fr";
   const bc=p.badge==="NEW"?"background:var(--k);color:var(--w)":"background:var(--red);color:var(--k)";
   document.getElementById("pmBadge").innerHTML=p.badge?`<span style="font-size:.46rem;font-weight:900;letter-spacing:.14em;text-transform:uppercase;padding:3px 10px;${bc}">${p.badge}</span>`:"";
-  document.getElementById("pmCat").textContent=p.cat==="homme"?"Homme":p.cat==="femme"?"Femme":"Accessoires";
+  document.getElementById("pmCat").textContent=(SITE_CATS.find(c=>c.id===p.cat)||{}).name||"";
   document.getElementById("pmName").textContent=p.name;
   // Description produit
   const descEl=document.getElementById("pmDesc");
@@ -1819,7 +1828,7 @@ async function loadAllData(){
   try{
     if(slidesR.error) throw slidesR.error;
     SITE_SLIDES=(slidesR.data||[]).map(s=>({
-      title:s.title||'',subtitle:s.subtitle||'',eyebrow:s.eyebrow||'',cta:s.cta||'Découvrir →',link:s.link||'homme',img:s.img||''
+      title:s.title||'',subtitle:s.subtitle||'',eyebrow:s.eyebrow||'',cta:s.cta||'Découvrir →',link:s.link||'',img:s.img||''
     }));
   }catch(err){console.warn('Erreur chargement slides (non bloquant):',err);}
 
@@ -1870,6 +1879,11 @@ async function loadAllData(){
 // Toute catégorie active dans l'admin (Catégories) apparaît automatiquement dans la navbar.
 // Seules les vraies pages indépendantes (À propos) viennent de la table nav_links.
 let SITE_NAV_LINKS=[];
+// Bouton « Explorer / Voir tous les produits » : va à la 1re catégorie active, sinon reste sur l'accueil
+function goShop(){
+  const c=SITE_CATS.find(c=>c.active!==false);
+  if(c)showCat(c.id);else nav('home');
+}
 function renderNavLinks(){
   const list=document.getElementById('navLinksList');
   const mobileEl=document.getElementById('mob-dynamic-links');
@@ -1892,6 +1906,9 @@ function renderNavLinks(){
       `<li><a onclick="${n.goCall}" id="nl-${n.id}" style="${n.highlight?'color:var(--red)':''}">${n.label}</a></li>`
     ).join('');
   }
+  // Footer « Collections » : mêmes catégories que le menu
+  const footEl=document.getElementById('footCatLinks');
+  if(footEl) footEl.innerHTML=catItems.map(n=>`<a onclick="${n.goCall}">${n.label}</a>`).join('');
   if(mobileEl){
     mobileEl.innerHTML=items.map(n=>
       `<div class="mob-a" onclick="${n.goCall};closeMob()" style="${n.highlight?'color:var(--red)':''}">${n.label}</div>`
@@ -1927,9 +1944,8 @@ function renderHeroSlides(){
   }
 }
 function nav2OrCat(link){
-  const validCats=['homme','femme','acc'];
-  if(validCats.includes(link)) showCat(link);
-  else nav(link);
+  if(SITE_CATS.some(c=>c.id===link)) showCat(link);
+  else if(document.getElementById('page-'+link)&&link!=='newdrop') nav(link);
 }
 
 // ═══ RENDU DYNAMIQUE DU MARQUEE ═══
@@ -1981,6 +1997,13 @@ function renderPayMethods(s){
 }
 
 function applySiteSettings(s){
+  // Carrousel d'accueil : activé/désactivé depuis l'admin (Contenu du site > Carrousel)
+  const hc=document.getElementById('heroCarousel');
+  if(hc){
+    const on=s.carousel_enabled!==false;
+    hc.style.display=on?'':'none';
+    if(!on)clearTimeout(hcTimer);
+  }
   // Modes de paiement
   renderPayMethods(s);
   // Page À propos
@@ -2051,42 +2074,43 @@ let SITE_CATS=[];
 function renderCatsGrid(){
   const grid=document.getElementById('homeCatsGrid');
   if(!grid)return;
-  // Affiche uniquement les vraies catégories actives, pilotées depuis l'admin — rien de codé en dur
-  const fallbackImgs={
-    homme:'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?w=500&q=80',
-    femme:'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&q=80',
-    acc:'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=500&q=80',
-    newdrop:'https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=900&q=80'
-  };
-  // Toutes les catégories actives s'affichent — sauf newdrop qui a leur propre bloc visuel large ci-dessous
-  const specialIds=['newdrop'];
-  const catsToShow=SITE_CATS.filter(c=>c.active&&!specialIds.includes(c.id));
-  const catCards=catsToShow.map(c=>`
-    <div onclick="showCat('${c.id}')" style="cursor:pointer;position:relative;overflow:hidden;aspect-ratio:.75;background:var(--k)">
-      <img src="${c.img||fallbackImgs[c.id]||''}" alt="" style="width:100%;height:100%;object-fit:cover;opacity:.65;transition:transform .5s;display:block"/>
-      <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.75) 0%,transparent 55%)"></div>
-      <div style="position:absolute;bottom:0;left:0;right:0;padding:1rem .8rem">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:900;color:var(--w);text-transform:uppercase;letter-spacing:.04em;line-height:1;margin-bottom:.4rem">${c.name}</div>
-        <button class="btn-red" style="font-size:.5rem;padding:6px 12px" onclick="event.stopPropagation();showCat('${c.id}')">Découvrir →</button>
+  // Uniquement les catégories actives présentes en base — rien de codé en dur
+  const cats=SITE_CATS.filter(c=>c.active!==false);
+  const sec=grid.closest('.si');
+  if(sec)sec.style.display=cats.length?'':'none';
+  grid.innerHTML=cats.map(c=>`
+    <div class="cat-tile" onclick="showCat('${c.id}')">
+      ${c.img?`<img src="${c.img}" alt="" loading="lazy"/>`:''}
+      <div class="ct-shade"></div>
+      <div class="ct-body">
+        <div class="ct-name">${c.name}</div>
+        <button class="btn-red" style="font-size:.55rem;padding:8px 16px" onclick="event.stopPropagation();showCat('${c.id}')">Découvrir →</button>
       </div>
     </div>`).join('');
-
-  // New Drop — géré comme une catégorie (image, actif/inactif) mais pointe vers sa page dédiée
-  const newdropCat=SITE_CATS.find(c=>c.id==='newdrop'&&c.active);
-  let extraBlocks='';
-  if(newdropCat){
-    extraBlocks+=`<div onclick="showCat('newdrop')" style="cursor:pointer;position:relative;overflow:hidden;aspect-ratio:1.6;background:var(--k);grid-column:span 2">
-      <img src="${newdropCat.img||fallbackImgs.newdrop}" alt="" style="width:100%;height:100%;object-fit:cover;opacity:.5;transition:transform .5s;display:block;object-position:center 25%"/>
-      <div style="position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,.8) 0%,transparent 65%)"></div>
-      <div style="position:absolute;top:.7rem;left:.9rem;background:var(--red);font-size:.44rem;font-weight:900;letter-spacing:.1em;text-transform:uppercase;color:var(--k);padding:3px 8px">🔥 LIVE NOW</div>
-      <div style="position:absolute;bottom:0;left:0;padding:1.2rem 1rem">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-size:clamp(1.5rem,3vw,2.4rem);font-weight:900;color:var(--w);text-transform:uppercase;letter-spacing:.04em;line-height:1;margin-bottom:.5rem">${newdropCat.name}</div>
-        <button class="btn-red" style="font-size:.5rem;padding:6px 14px" onclick="event.stopPropagation();showCat('newdrop')">Voir le Drop →</button>
-      </div>
-    </div>`;
+  startCatsAutoScroll(grid);
+}
+// Défilement doux automatique sur mobile (s'arrête dès que le visiteur touche la rangée)
+let _catsTimer=null;
+function catsScroll(d){
+  const g=document.getElementById('homeCatsGrid');if(!g||!g.children[0])return;
+  if(_catsTimer){clearInterval(_catsTimer);_catsTimer=null;}
+  g.scrollBy({left:d*(g.children[0].getBoundingClientRect().width+10),behavior:'smooth'});
+}
+function startCatsAutoScroll(grid){
+  if(_catsTimer){clearInterval(_catsTimer);_catsTimer=null;}
+  if(grid.dataset.bound!=='1'){
+    grid.dataset.bound='1';
+    ['touchstart','mousedown','wheel'].forEach(ev=>grid.addEventListener(ev,()=>{if(_catsTimer){clearInterval(_catsTimer);_catsTimer=null;}},{passive:true}));
   }
-
-  grid.innerHTML=catCards+extraBlocks;
+  const more=()=>grid.scrollWidth>grid.clientWidth+4;
+  const arrows=document.querySelectorAll('.cats-arrow');arrows.forEach(a=>a.style.visibility=more()?'':'hidden');
+  if(!more())return;
+  _catsTimer=setInterval(()=>{
+    const t=grid.children[0];if(!t)return;
+    const step=t.getBoundingClientRect().width+10;
+    if(grid.scrollLeft+grid.clientWidth>=grid.scrollWidth-4)grid.scrollTo({left:0,behavior:'smooth'});
+    else grid.scrollBy({left:step,behavior:'smooth'});
+  },3500);
 }
 
 // ═══ SYSTÈME DE CODE PROMO ═══
