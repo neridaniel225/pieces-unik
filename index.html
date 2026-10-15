@@ -1997,6 +1997,13 @@ function renderPayMethods(s){
 }
 
 function applySiteSettings(s){
+  // Couleur principale choisie dans l'admin (Paramètres > Thème & Couleurs)
+  if(/^#[0-9a-fA-F]{6}$/.test(s.theme_color||'')){
+    const c=s.theme_color,n=parseInt(c.slice(1),16),r=n>>16,g=(n>>8)&255,b=n&255;
+    const lt=v=>Math.min(255,Math.round(v+(255-v)*.25));
+    document.documentElement.style.setProperty('--red',c);
+    document.documentElement.style.setProperty('--red2','#'+[lt(r),lt(g),lt(b)].map(v=>v.toString(16).padStart(2,'0')).join(''));
+  }
   // Carrousel d'accueil : activé/désactivé depuis l'admin (Contenu du site > Carrousel)
   const hc=document.getElementById('heroCarousel');
   if(hc){
@@ -2078,7 +2085,14 @@ function renderCatsGrid(){
   const cats=SITE_CATS.filter(c=>c.active!==false);
   const sec=grid.closest('.si');
   if(sec)sec.style.display=cats.length?'':'none';
-  grid.innerHTML=cats.map(c=>`
+  // Boucle infinie : la liste est répétée pour remplir la largeur, puis dupliquée une fois.
+  // Quand on atteint la fin de la 1re moitié, on revient (sans saut visible) au début.
+  const W=grid.clientWidth||window.innerWidth;
+  const tileW=window.innerWidth>768?Math.max(250,W/4):W*.78;
+  const reps=cats.length>1?Math.max(1,Math.ceil((W+tileW)/(cats.length*(tileW+10)))):1;
+  const base=[];for(let i=0;i<reps;i++)base.push(...cats);
+  const shown=cats.length>1?[...base,...base]:cats;
+  grid.innerHTML=shown.map(c=>`
     <div class="cat-tile" onclick="showCat('${c.id}')">
       ${c.img?`<img src="${c.img}" alt="" loading="lazy"/>`:''}
       <div class="ct-shade"></div>
@@ -2089,28 +2103,38 @@ function renderCatsGrid(){
     </div>`).join('');
   startCatsAutoScroll(grid);
 }
-// Défilement doux automatique sur mobile (s'arrête dès que le visiteur touche la rangée)
-let _catsTimer=null;
-function catsScroll(d){
-  const g=document.getElementById('homeCatsGrid');if(!g||!g.children[0])return;
-  if(_catsTimer){clearInterval(_catsTimer);_catsTimer=null;}
-  g.scrollBy({left:d*(g.children[0].getBoundingClientRect().width+10),behavior:'smooth'});
+// Défilement automatique en boucle infinie (ne s'arrête jamais en fin de rangée).
+// Si le visiteur touche la rangée, la pause dure 8 s puis ça reprend.
+let _catsTimer=null,_catsResume=null;
+function catsHalf(g){return g.scrollWidth/2;}
+function catsWrap(g){
+  if(g.children.length<2)return;
+  const h=catsHalf(g);
+  if(g.scrollLeft>=h){g.style.scrollSnapType='none';g.scrollLeft-=h;requestAnimationFrame(()=>{g.style.scrollSnapType='';});}
 }
+function catsStep(g,d){
+  const t=g.children[0];if(!t)return;
+  const w=t.getBoundingClientRect().width+10;
+  if(d<0&&g.scrollLeft<w){g.style.scrollSnapType='none';g.scrollLeft+=catsHalf(g);requestAnimationFrame(()=>{g.style.scrollSnapType='';g.scrollBy({left:d*w,behavior:'smooth'});});return;}
+  g.scrollBy({left:d*w,behavior:'smooth'});
+}
+function catsPause(){
+  if(_catsTimer){clearInterval(_catsTimer);_catsTimer=null;}
+  clearTimeout(_catsResume);
+  _catsResume=setTimeout(()=>{const g=document.getElementById('homeCatsGrid');if(g)startCatsAutoScroll(g);},8000);
+}
+function catsScroll(d){const g=document.getElementById('homeCatsGrid');if(!g)return;catsPause();catsStep(g,d);}
 function startCatsAutoScroll(grid){
   if(_catsTimer){clearInterval(_catsTimer);_catsTimer=null;}
   if(grid.dataset.bound!=='1'){
     grid.dataset.bound='1';
-    ['touchstart','mousedown','wheel'].forEach(ev=>grid.addEventListener(ev,()=>{if(_catsTimer){clearInterval(_catsTimer);_catsTimer=null;}},{passive:true}));
+    grid.addEventListener('scroll',()=>catsWrap(grid),{passive:true});
+    ['touchstart','mousedown','wheel'].forEach(ev=>grid.addEventListener(ev,catsPause,{passive:true}));
   }
-  const more=()=>grid.scrollWidth>grid.clientWidth+4;
-  const arrows=document.querySelectorAll('.cats-arrow');arrows.forEach(a=>a.style.visibility=more()?'':'hidden');
-  if(!more())return;
-  _catsTimer=setInterval(()=>{
-    const t=grid.children[0];if(!t)return;
-    const step=t.getBoundingClientRect().width+10;
-    if(grid.scrollLeft+grid.clientWidth>=grid.scrollWidth-4)grid.scrollTo({left:0,behavior:'smooth'});
-    else grid.scrollBy({left:step,behavior:'smooth'});
-  },3500);
+  const more=grid.children.length>1;
+  document.querySelectorAll('.cats-arrow').forEach(a=>a.style.visibility=more?'':'hidden');
+  if(!more)return;
+  _catsTimer=setInterval(()=>catsStep(grid,1),3500);
 }
 
 // ═══ SYSTÈME DE CODE PROMO ═══
